@@ -1,4 +1,4 @@
-
+    // الدوال الأساسية الحالية
     function previewImage(event) {
         const reader = new FileReader();
         reader.onload = function() {
@@ -47,11 +47,8 @@
     }
 
     function toggleAutoSave(isChecked) {
-        if (isChecked) {
-            saveData();
-        } else {
-            localStorage.removeItem('smart_cv_draft');
-        }
+        if (isChecked) { saveData(); } 
+        else { localStorage.removeItem('smart_cv_draft'); }
     }
 
     function saveData() {
@@ -93,15 +90,7 @@
     function copyCVCode() {
         const cvHTML = document.getElementById('cvCoreContainer').innerHTML;
         navigator.clipboard.writeText(cvHTML).then(() => {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: 'تم نسخ كود السيرة بنجاح!',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'تم نسخ كود السيرة بنجاح!', showConfirmButton: false, timer: 3000, timerProgressBar: true });
         }).catch(err => {
             Swal.fire('خطأ', 'تعذر نسخ الكود.', 'error');
         });
@@ -112,24 +101,13 @@
             const text = await navigator.clipboard.readText();
             if (text && text.includes('cv-paper')) {
                 document.getElementById('cvCoreContainer').innerHTML = text;
-                
                 const newUploadInput = document.getElementById('imageUpload');
                 if(!newUploadInput) {
                     const inputHTML = `<input type="file" id="imageUpload" style="display:none" accept="image/*" onchange="previewImage(event)">`;
                     document.querySelector('.sidebar').insertAdjacentHTML('beforeend', inputHTML);
                 }
-
                 saveData(); 
-
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: 'تم لصق الكود بنجاح!',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'تم لصق الكود بنجاح!', showConfirmButton: false, timer: 3000, timerProgressBar: true });
             } else {
                 Swal.fire('خطأ', 'الكود المنسوخ لا يبدو ككود سيرة ذاتية صالح.', 'error');
             }
@@ -155,18 +133,99 @@
         });
     }
 
-    function shareCV() {
-        if (navigator.share) {
-            navigator.share({
-                title: 'السيرة الذاتية',
-                text: 'إليك السيرة الذاتية الخاصة بي:',
-                url: window.location.href
-            }).catch(console.error);
-        } else {
-            Swal.fire('عذراً', 'جهازك لا يدعم المشاركة المباشرة، يمكنك طباعتها كـ PDF.', 'info');
-        }
+    // ==========================================
+    // الدوال الجديدة: التنزيل والمشاركة
+    // ==========================================
+
+    // إعداد مساحة العمل قبل التصوير/الطباعة
+    function prepareForExport() {
+        document.activeElement.blur(); // إزالة التحديد عن أي نص
+        const cvElement = document.getElementById('cvContentArea');
+        cvElement.classList.add('exporting'); // إضافة كلاس التصدير لإظهار التوقيع وإخفاء الحدود
+        return cvElement;
     }
 
+    function finishExport() {
+        const cvElement = document.getElementById('cvContentArea');
+        cvElement.classList.remove('exporting'); // إزالة كلاس التصدير للعودة لوضع التعديل
+    }
+
+    // 1. تنزيل كصورة
+    function downloadImage() {
+        Swal.fire({ title: 'جاري التجهيز...', text: 'يتم إنشاء صورة السيرة الذاتية', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+        const cvElement = prepareForExport();
+        
+        setTimeout(() => {
+            html2canvas(cvElement, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                const userName = document.querySelector('[data-save="name"]').innerText.split(' ')[0] || 'User';
+                link.download = `CV_${userName}_ByATM.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                finishExport();
+                Swal.close();
+            }).catch(err => {
+                finishExport();
+                Swal.fire('خطأ', 'تعذر إنشاء الصورة.', 'error');
+            });
+        }, 500); // تأخير بسيط لضمان تطبيق كلاس الـ exporting
+    }
+
+    // 2. تنزيل كـ PDF
+    function downloadPDF() {
+    // إخفاء كل العناصر غير الضرورية فوراً
+    const toolbar = document.querySelector('.smart-toolbar');
+    const watermark = document.querySelector('.atm-watermark');
+    const footer = document.querySelector('.footer-section');
+    
+    // إظهار توقيع التصدير
+    const cvElement = prepareForExport();
+
+    // تشغيل أمر الطباعة (الذي يسمح بحفظ الملف PDF بجودة 100%)
+    window.print();
+
+    // إعادة العناصر بعد إغلاق نافذة الطباعة
+    setTimeout(() => {
+        finishExport();
+    }, 500);
+}
+
+    // 3. المشاركة المباشرة كصورة
+    async function shareAsImage() {
+        Swal.fire({ title: 'جاري التجهيز...', text: 'يتم تجهيز الصورة للمشاركة', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+        const cvElement = prepareForExport();
+
+        setTimeout(async () => {
+            try {
+                const canvas = await html2canvas(cvElement, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], 'CV_ByATM.png', { type: 'image/png' });
+                    
+                    finishExport();
+                    Swal.close();
+
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            title: 'السيرة الذاتية',
+                            text: 'مرحباً، تفضل بالاطلاع على السيرة الذاتية الخاصة بي.',
+                            files: [file]
+                        });
+                    } else {
+                        Swal.fire('ملاحظة', 'جهازك أو متصفحك لا يدعم المشاركة المباشرة للصور. سيتم تنزيل الصورة بدلاً من ذلك.', 'info');
+                        const link = document.createElement('a');
+                        link.download = 'CV_ByATM.png';
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    }
+                }, 'image/png');
+            } catch (error) {
+                finishExport();
+                Swal.fire('خطأ', 'حدث خطأ أثناء التجهيز للمشاركة.', 'error');
+            }
+        }, 500);
+    }
+
+    // التهيئة عند التحميل
     window.onload = function() {
         const savedFontSize = localStorage.getItem('smart_cv_font_size');
         if (savedFontSize) {
