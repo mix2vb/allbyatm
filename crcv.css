@@ -1,7 +1,3 @@
-        .post-thumb, .post-labels, .item, .goal, .quick-view-btn, .read-more {
-            display: none !important;
-        }
-
         :root {
             --bg-body: #e9ecef;
             --cv-bg: #ffffff;
