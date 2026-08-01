@@ -1,3 +1,4 @@
+<script>
  (function() {
     const items = [
       { text: "اللهمَّ اكفني بحلالك عن حرامك", icon: "fa-hand-peace", color: "#b68b6b" },
@@ -81,3 +82,7 @@
 
     console.log('✅ توست الدعاء الصغير يعمل - النصوص ظاهرة بالكامل');
   })();
+
+</script>
+
+
