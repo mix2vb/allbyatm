@@ -1,6 +1,6 @@
 // كلمات وأدعية وأذكار - بداية
 
-<script>
+
  (function() {
     const items = [
       { text: "اللهمَّ اكفني بحلالك عن حرامك", icon: "fa-hand-peace", color: "#b68b6b" },
@@ -85,14 +85,14 @@
     console.log('✅ توست الدعاء الصغير يعمل - النصوص ظاهرة بالكامل');
   })();
 
-</script>
+
 // كلمات وأدعية وأذكار - نهاية
 
 
 
 
 //<!-- ===== كارت الترحيب - رسالة صغيرة أعلى يسار ===== -->
-<script>
+
     const VISIT_KEY = 'welcome_visit_timer';
     
     // ===== 🎊 أنفجار الورقيات =====
@@ -242,14 +242,14 @@
     }
     
     console.log('🌙 كارت الترحيب يعمل تلقائياً - رسالة صغيرة أعلى يسار 🎊');
-</script>
+
 
 //<!-- ===== كارت الترحيب - رسالة صغيرة أعلى يسار ===== -->
 
 
 //<!-- بداية كود تذكير أذكار الصباح والمساء وسورة الكهف -->
 
-<script>
+
   (function() {
     const toast = document.getElementById('reminderToast');
     const textEl = document.getElementById('reminderText');
@@ -538,7 +538,7 @@
     console.log(`📖 تذكير سورة الكهف: يوم الجمعة طوال اليوم`);
     
   })();
-</script>
+
 //<!-- نهاية كود تذكير أذكار الصباح والمساء وسورة الكهف -->
 
 
@@ -546,7 +546,7 @@
 
 //<!-- بداية كود مواقيت الصلاة -->
 
-<script>
+
   (function() {
     const toast = document.getElementById('prayerToast');
     const textEl = document.getElementById('prayerText');
@@ -874,8 +874,8 @@
     console.log('✅ مواقيت الصلاة - شغالة 🕌');
     console.log(`📍 المدينة: ${userCity}`);
   })();
-</script>
-<!-- نهاية كود مواقيت الصلاة -->
+
+
 //<!-- نهاية كود مواقيت الصلاة -->
 
 
