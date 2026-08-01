@@ -557,8 +557,10 @@
     let isToastVisible = false;
     let retryCount = 0;
     const MAX_RETRIES = 3;
+    let userTimezone = 'Asia/Riyadh'; // افتراضي
+    let userCity = 'مكة المكرمة';
     
-    // ===== تخزين الصلوات المغلقة في localStorage =====
+    // ===== تخزين الصلوات المغلقة =====
     function getClosedPrayers() {
       try {
         const data = localStorage.getItem('closedPrayers');
@@ -583,84 +585,101 @@
       return closed[key] === true;
     }
 
-    // ===== الحصول على التوقيت الصحيح من الإنترنت =====
-    function getCurrentTimeFromServer() {
-      return fetch('https://worldtimeapi.org/api/timezone/Etc/UTC', {
+    // ===== جلب الموقع والتوقيت المحلي عن طريق IP =====
+    function getLocationAndTimeByIP() {
+      console.log('🌐 جاري تحديد الموقع والتوقيت عن طريق IP...');
+      
+      // نستخدم ip-api.com للحصول على الموقع والتوقيت معاً
+      fetch('http://ip-api.com/json/', {
         mode: 'cors'
       })
       .then(response => {
-        if (!response.ok) throw new Error('فشل جلب التوقيت');
+        if (!response.ok) throw new Error('فشل جلب بيانات IP');
         return response.json();
       })
       .then(data => {
-        // تحويل الوقت من UTC إلى التوقيت المحلي للمستخدم
-        const utcTime = new Date(data.utc_datetime);
-        const localOffset = new Date().getTimezoneOffset();
-        const localTime = new Date(utcTime.getTime() - localOffset * 60000);
-        return localTime;
-      })
-      .catch(() => {
-        console.warn('⚠️ فشل جلب التوقيت من السيرفر، استخدام توقيت الجهاز');
-        return new Date(); // الرجوع لتوقيت الجهاز كحل احتياطي
-      });
-    }
-
-    // ===== جلب الموقع عن طريق IP =====
-    function getLocationByIP() {
-      console.log('🌐 جاري تحديد الموقع عن طريق IP...');
-      
-      fetch('https://ipapi.co/json/', {
-        mode: 'cors',
-        headers: {
-          'Accept': 'application/json'
-        }
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('📍 تم تحديد الموقع عن طريق IP:', data);
+        console.log('📍 بيانات الموقع:', data);
         
-        if (data && data.latitude && data.longitude) {
-          const lat = data.latitude;
-          const lng = data.longitude;
-          console.log(`✅ الإحداثيات: ${lat}, ${lng}`);
-          fetchPrayerTimes(lat, lng);
-        } else {
-          console.warn('⚠️ لم يتم العثور على إحداثيات من IP، استخدام إحداثيات افتراضية');
-          fetchPrayerTimes(21.4225, 39.8262);
-        }
-      })
-      .catch(error => {
-        console.warn('⚠️ فشل جلب الموقع عن طريق IP:', error.message);
-        console.log('🔄 محاولة استخدام خدمة IP بديلة...');
-        
-        fetch('https://ip-api.com/json/')
+        if (data && data.status === 'success') {
+          const lat = data.lat;
+          const lng = data.lon;
+          const city = data.city;
+          const country = data.country;
+          const timezone = data.timezone;
+          
+          userCity = city || 'مكة المكرمة';
+          userTimezone = timezone || 'Asia/Riyadh';
+          
+          console.log(`✅ المدينة: ${city}, الدولة: ${country}`);
+          console.log(`🕐 المنطقة الزمنية: ${timezone}`);
+          console.log(`📍 الإحداثيات: ${lat}, ${lng}`);
+          
+          // جلب التوقيت المحلي من نفس السيرفر
+          fetch(`http://worldtimeapi.org/api/timezone/${timezone}`, {
+            mode: 'cors'
+          })
           .then(response => response.json())
-          .then(data => {
-            if (data && data.lat && data.lon) {
-              const lat = data.lat;
-              const lng = data.lon;
-              console.log(`✅ الإحداثيات من الخدمة البديلة: ${lat}, ${lng}`);
-              fetchPrayerTimes(lat, lng);
+          .then(timeData => {
+            if (timeData && timeData.utc_datetime) {
+              const localTime = new Date(timeData.utc_datetime);
+              console.log(`🕐 التوقيت المحلي لـ ${city}: ${localTime.toLocaleString()}`);
+              fetchPrayerTimes(lat, lng, localTime);
             } else {
-              console.warn('⚠️ فشل تحديد الموقع من الخدمات البديلة، استخدام إحداثيات افتراضية');
-              fetchPrayerTimes(21.4225, 39.8262);
+              console.warn('⚠️ فشل جلب التوقيت المحلي، استخدام توقيت الجهاز');
+              fetchPrayerTimes(lat, lng, new Date());
             }
           })
           .catch(() => {
-            console.warn('⚠️ جميع خدمات IP فشلت، استخدام إحداثيات افتراضية (مكة)');
-            fetchPrayerTimes(21.4225, 39.8262);
+            console.warn('⚠️ فشل جلب التوقيت من worldtimeapi، استخدام توقيت الجهاز');
+            fetchPrayerTimes(lat, lng, new Date());
           });
+          
+        } else {
+          console.warn('⚠️ فشل تحديد الموقع من IP، استخدام موقع مكة كافتراضي');
+          fetchPrayerTimes(21.4225, 39.8262, new Date());
+        }
+      })
+      .catch(error => {
+        console.warn('⚠️ فشل جلب بيانات IP:', error.message);
+        console.log('🔄 محاولة استخدام خدمة IP بديلة...');
+        
+        // خدمة بديلة
+        fetch('https://ipapi.co/json/', {
+          mode: 'cors'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.latitude && data.longitude) {
+            const lat = data.latitude;
+            const lng = data.longitude;
+            const city = data.city;
+            const timezone = data.timezone;
+            
+            userCity = city || 'مكة المكرمة';
+            userTimezone = timezone || 'Asia/Riyadh';
+            
+            console.log(`✅ المدينة البديلة: ${city}`);
+            console.log(`📍 الإحداثيات: ${lat}, ${lng}`);
+            
+            fetchPrayerTimes(lat, lng, new Date());
+          } else {
+            console.warn('⚠️ فشل جميع خدمات IP، استخدام موقع مكة');
+            fetchPrayerTimes(21.4225, 39.8262, new Date());
+          }
+        })
+        .catch(() => {
+          console.warn('⚠️ جميع خدمات IP فشلت، استخدام موقع مكة');
+          fetchPrayerTimes(21.4225, 39.8262, new Date());
+        });
       });
     }
 
-    function fetchPrayerTimes(lat, lng) {
-      const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=5`;
+    // ===== جلب مواقيت الصلاة =====
+    function fetchPrayerTimes(lat, lng, currentTime) {
+      // استخدام method=5 (رابطة العالم الإسلامي) مع ضبط المنطقة الزمنية
+      const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=5&timezonestring=${userTimezone}`;
       console.log('📡 جاري جلب المواقيت من:', url);
+      console.log(`🕐 التوقيت المحلي: ${currentTime.toLocaleString()}`);
       
       fetch(url)
         .then(response => {
@@ -670,18 +689,18 @@
           return response.json();
         })
         .then(data => {
-          console.log('📥 تم استلام البيانات بنجاح');
+          console.log('📥 تم استلام بيانات المواقيت بنجاح');
           
           if (data && data.code === 200 && data.data && data.data.timings) {
             retryCount = 0;
             const timings = data.data.timings;
             console.log('🕐 مواقيت الصلاة:', timings);
             
-            // الحصول على التوقيت الصحيح أولاً
-            getCurrentTimeFromServer().then(serverTime => {
-              console.log('🕐 التوقيت الصحيح من السيرفر:', serverTime);
-              processPrayerTimes(timings, serverTime);
-            });
+            // استخدام التاريخ المحلي من الـ API
+            const date = data.data.date;
+            console.log(`📅 التاريخ المحلي: ${date.readable}`);
+            
+            processPrayerTimes(timings, currentTime);
           } else {
             console.error('❌ تنسيق البيانات غير صحيح:', data);
             handleError();
@@ -700,7 +719,7 @@
         console.log(`🔄 محاولة إعادة الاتصال (${retryCount}/${MAX_RETRIES}) بعد ${waitTime/1000} ثانية...`);
         setTimeout(getPrayerTimes, waitTime);
       } else {
-        console.error('❌ فشل الاتصال بعد عدة محاولات، سيتم المحاولة بعد 5 دقائق');
+        console.error('❌ فشل الاتصال بعد عدة محاولات');
         setTimeout(getPrayerTimes, 300000);
         retryCount = 0;
       }
@@ -728,35 +747,35 @@
             const minutes = parseInt(parts[0]) * 60 + parseInt(parts[1]);
             prayerMinutes[info.ar] = minutes;
             prayerNames.push(info.ar);
-            console.log(`✅ ${info.ar}: ${timeStr} -> ${minutes} دقيقة`);
+            console.log(`✅ ${info.ar}: ${timeStr}`);
           }
         }
       }
       
       if (prayerNames.length === 0) {
-        console.error('❌ لا توجد أوقات صلاة صالحة في البيانات');
+        console.error('❌ لا توجد أوقات صلاة صالحة');
         handleError();
         return;
       }
       
-      // حساب الوقت الحالي من التوقيت الصحيح
+      // حساب الوقت الحالي من التوقيت المحلي
       const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-      console.log(`🕐 الوقت الحالي (من السيرفر): ${currentTime.getHours()}:${currentTime.getMinutes()}`);
-      console.log(`🕐 بالدقائق: ${currentMinutes}`);
+      console.log(`🕐 الوقت الحالي: ${currentTime.getHours()}:${currentTime.getMinutes().toString().padStart(2, '0')}`);
+      console.log(`📍 المدينة: ${userCity}`);
       
       // البحث عن الصلاة الحالية أو القادمة
       let targetPrayer = null;
       let targetTime = null;
       let isAfter = false;
       
-      // أولاً: نبحث عن صلاة بدأت خلال الـ 20 دقيقة الماضية
+      // نبحث عن صلاة بدأت خلال الـ 20 دقيقة الماضية
       for (const name of prayerNames) {
         const prayerMin = prayerMinutes[name];
         if (prayerMin <= currentMinutes && currentMinutes - prayerMin <= 20) {
           targetPrayer = name;
           targetTime = prayerMin;
           isAfter = true;
-          console.log(`✅ وجدنا صلاة ${name} بدأت منذ ${currentMinutes - prayerMin} دقيقة`);
+          console.log(`✅ صلاة ${name} بدأت منذ ${currentMinutes - prayerMin} دقيقة`);
           break;
         }
       }
@@ -788,11 +807,11 @@
         diffMinutes = currentMinutes - targetTime;
       }
       
-      console.log(`🎯 الصلاة المستهدفة: ${targetPrayer}, الفرق: ${diffMinutes} دقيقة, ${isAfter ? 'بعد' : 'قبل'}`);
+      console.log(`🎯 الصلاة المستهدفة: ${targetPrayer}, الفرق: ${diffMinutes} دقيقة`);
       
       // التحقق من أن الصلاة غير مغلقة
       if (isPrayerClosed(targetPrayer)) {
-        console.log(`⏭️ صلاة ${targetPrayer} مغلقة لهذا اليوم، سيتم البحث عن التالية`);
+        console.log(`⏭️ صلاة ${targetPrayer} مغلقة لهذا اليوم`);
         for (const name of prayerNames) {
           if (prayerMinutes[name] > currentMinutes && !isPrayerClosed(name)) {
             const diff = prayerMinutes[name] - currentMinutes;
@@ -834,7 +853,7 @@
           }
         }
         
-        // ✅ استخدام أيقونة المسجد مع اللون المناسب
+        // عرض المدينة في التصميم
         updateToastContent(targetPrayer, timeString, color, 'fa-mosque', isAfter);
         currentPrayer = targetPrayer;
         currentPrayerTime = targetTime;
@@ -886,6 +905,8 @@
         <span class="prayer-name" style="color:${color}">${statusText} ${prayerName}</span>
         <br>
         <span class="time-remaining">⏱️ ${timeString}</span>
+        <br>
+        <small style="color:#888;font-size:11px;">📍 ${userCity}</small>
       `;
       iconEl.innerHTML = `<i class="fas fa-mosque"></i>`;
       iconEl.style.color = color;
@@ -922,17 +943,18 @@
 
     // ===== بدء التشغيل =====
     console.log('🕌 بدء تشغيل كود مواقيت الصلاة...');
+    console.log('📌 يعتمد على IP مع التوقيت المحلي للمنطقة');
     
-    function startPrayerTimes() {
-      getLocationByIP();
+    function getPrayerTimes() {
+      getLocationAndTimeByIP();
     }
     
-    startPrayerTimes();
+    getPrayerTimes();
 
-    // ===== تحديث كل دقيقة =====
-    setInterval(startPrayerTimes, 60000);
+    // ===== تحديث كل دقيقتين =====
+    setInterval(getPrayerTimes, 120000);
 
-    console.log('✅ كود مواقيت الصلاة - يعمل باستخدام IP مع توقيت سيرفر دقيق 🕌');
+    console.log('✅ تم التفعيل بنجاح 🕌');
   })();
 </script>
 //<!-- نهاية كود مواقيت الصلاة -->
