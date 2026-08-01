@@ -544,8 +544,6 @@
 
 //<!-- بداية كود مواقيت الصلاة -->
 
-//<!-- بداية كود مواقيت الصلاة -->
-
 
   (function() {
     const toast = document.getElementById('prayerToast');
@@ -809,7 +807,6 @@
           <small style="color:#888;font-size:10px;">📍 ${userCity}</small>
         `;
         
-        // تغيير لون الأيقونة فقط بدون تظليل
         iconEl.textContent = '🕌';
         iconEl.style.color = color;
         iconEl.style.textShadow = 'none';
@@ -874,6 +871,9 @@
     console.log('✅ مواقيت الصلاة - شغالة 🕌');
     console.log(`📍 المدينة: ${userCity}`);
   })();
+
+
+
 
 
 //<!-- نهاية كود مواقيت الصلاة -->
