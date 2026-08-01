@@ -1,4 +1,4 @@
-<script>
+
 // ===== التحكم في الأعمدة =====
 function adjustGrid(delta) {
   const slider = document.getElementById('gridSlider');
@@ -211,4 +211,4 @@ if (document.readyState === 'loading') {
 }
 
 console.log('⚙️ نظام الإعدادات يعمل 🎛️');
-</script>
+
