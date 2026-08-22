@@ -562,8 +562,7 @@
         return closed[key] === true;
     }
 
-    // ===== 🔥 تحديد الموقع تلقائياً (مجاني 100%) =====
-    // ===== تحديد الموقع تلقائياً (بديل ip-api.com) =====
+    // ===== 🔥 تحديد الموقع التلقائي (بديل ip-api.com) =====
     function getLocationByIP() {
         console.log('🌐 جاري تحديد الموقع التلقائي...');
 
@@ -657,7 +656,7 @@
         }
     }
 
-    // ===== معالجة المواقيت وعرض الإشعار =====
+    // ===== معالجة المواقيت =====
     function processPrayerTimes(timings) {
         var prayerMap = {
             'Fajr': { ar: 'الفجر', color: '#6c5b7b' },
