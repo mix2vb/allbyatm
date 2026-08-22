@@ -511,7 +511,7 @@
             })();
  
 // ============================================================
-// 🕐 مواقيت الصلاة - النسخة الموحدة والنظيفة 100%
+// 🕐 مواقيت الصلاة - نسخة تلقائية 100% (شاملة الحلول الاحتياطية والتوقيت العالمي)
 // ============================================================
 (function() {
     var toast = document.getElementById('prayerToast');
@@ -537,7 +537,7 @@
     var userLat = 24.7136;
     var userLng = 46.6753;
 
-    // قائمة خدمات الـ IP الشغالة والمضمونة بروتوكول HTTPS
+    // ===== قائمة خدمات IP الاحتياطية المتعددة =====
     var ipServices = [
         {
             name: 'ipwho.is',
@@ -565,6 +565,7 @@
         }
     ];
 
+    // ===== دوال localStorage =====
     function getClosedPrayers() {
         try {
             var data = localStorage.getItem('closedPrayers');
@@ -589,10 +590,12 @@
         return closed[key] === true;
     }
 
+    // ===== 🔥 تحديد الموقع عبر GPS أولاً =====
     function getLocation() {
-        console.log('🌐 جاري تحديد الموقع تلقائياً...');
+        console.log('🌐 جاري تحديد الموقع عبر المتصفح...');
 
         if (!navigator.geolocation) {
+            console.warn('⚠️ المتصفح لا يدعم تحديد الموقع، البدء ببحث شبكة IP...');
             tryNextIPService(0);
             return;
         }
@@ -601,36 +604,44 @@
             function(position) {
                 userLat = position.coords.latitude;
                 userLng = position.coords.longitude;
-                console.log('✅ تم التحديد بدقة عالية عبر GPS');
+                console.log('✅ الموقع تم تحديده بدقة عالية عبر GPS');
+                console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
                 getCityName(userLat, userLng);
             },
             function(error) {
-                console.warn('⚠️ تعذر GPS، البدء ببحث شبكة IP السريعة...');
+                console.warn('⚠️ فشل تحديد الموقع عبر GPS:', error.message);
+                console.log('🔄 البدء بالبحث عبر خدمات IP المتعددة...');
                 tryNextIPService(0);
             },
-            { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
         );
     }
 
+    // ===== جلب اسم المدينة من الإحداثيات (في حال عمل GPS) =====
     function getCityName(lat, lng) {
         var url = 'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lng + '&localityLanguage=ar';
 
         fetch(url)
-            .then(function(res) { return res.json(); })
+            .then(function(response) { return response.json(); })
             .then(function(data) {
                 if (data && (data.city || data.locality || data.principalSubdivision)) {
                     userCity = data.city || data.locality || data.principalSubdivision || 'الرياض';
+                    console.log('✅ المدينة: ' + userCity);
+                } else {
+                    console.warn('⚠️ فشل جلب اسم المدينة، استخدام الرياض كافتراضي');
                 }
                 fetchPrayerTimes();
             })
             .catch(function() {
+                console.warn('⚠️ فشل جلب اسم المدينة، استخدام الرياض كافتراضي');
                 fetchPrayerTimes();
             });
     }
 
+    // ===== البحث التنقلي عبر أكثر من سيرفر IP محلي/عالمي =====
     function tryNextIPService(index) {
         if (index >= ipServices.length) {
-            console.warn('⚠️ تم الاعتماد على الإحداثيات الافتراضية (الرياض)');
+            console.warn('⚠️ جميع خدمات IP فشلت، استخدام الرياض كافتراضي حتمي');
             userCity = 'الرياض';
             userLat = 24.7136;
             userLng = 46.6753;
@@ -639,10 +650,11 @@
         }
 
         var service = ipServices[index];
+        console.log('🌐 محاولة جلب الموقع عبر [' + service.name + ']...');
 
         fetch(service.url)
             .then(function(res) {
-                if (!res.ok) throw new Error('Unreachable');
+                if (!res.ok) throw new Error('سيرفر غير مستجيب');
                 return res.json();
             })
             .then(function(data) {
@@ -651,34 +663,40 @@
                     userLat = parsed.lat;
                     userLng = parsed.lng;
                     userCity = parsed.city || 'الرياض';
-                    console.log('✅ تم تحديد الموقع عبر: ' + service.name + ' (' + userCity + ')');
+                    console.log('✅ تم التحديد بنجاح عبر: ' + service.name);
+                    console.log('📍 المدينة: ' + userCity + ' | الإحداثيات: ' + userLat + ', ' + userLng);
                     fetchPrayerTimes();
                 } else {
-                    throw new Error('Invalid Data');
+                    throw new Error('بيانات غير مكتملة');
                 }
             })
-            .catch(function() {
+            .catch(function(err) {
+                console.warn('⚠️ فشل ' + service.name + ' (' + err.message + ')، تجربة الخدمة التالية...');
                 tryNextIPService(index + 1);
             });
     }
 
+    // ===== جلب مواقيت الصلاة =====
     function fetchPrayerTimes() {
         var url = 'https://api.aladhan.com/v1/timings?latitude=' + userLat + '&longitude=' + userLng + '&method=4';
-        console.log('📡 جاري جلب المواقيت لـ: ' + userCity);
+        console.log('📡 جاري جلب مواقيت الصلاة لـ ' + userCity + '...');
 
         fetch(url)
-            .then(function(res) { return res.json(); })
+            .then(function(response) { return response.json(); })
             .then(function(data) {
                 if (data && data.code === 200 && data.data && data.data.timings) {
                     retryCount = 0;
                     var timings = data.data.timings;
                     var timezone = (data.data.meta && data.data.meta.timezone) ? data.data.meta.timezone : null;
+                    console.log('🕐 مواقيت الصلاة:', timings);
                     processPrayerTimes(timings, timezone);
                 } else {
+                    console.error('❌ تنسيق البيانات غير صحيح');
                     handleError();
                 }
             })
-            .catch(function() {
+            .catch(function(error) {
+                console.error('❌ خطأ في جلب البيانات:', error);
                 handleError();
             });
     }
@@ -686,13 +704,17 @@
     function handleError() {
         retryCount++;
         if (retryCount <= MAX_RETRIES) {
-            setTimeout(fetchPrayerTimes, 5000 * retryCount);
+            var waitTime = 5000 * retryCount;
+            console.log('🔄 محاولة ' + retryCount + '/' + MAX_RETRIES + ' بعد ' + (waitTime/1000) + ' ثانية');
+            setTimeout(fetchPrayerTimes, waitTime);
         } else {
+            console.error('❌ فشل الاتصال، المحاولة بعد 5 دقائق');
             setTimeout(fetchPrayerTimes, 300000);
             retryCount = 0;
         }
     }
 
+    // ===== معالجة المواقيت مع حساب التوقيت العالمي للمنطقة =====
     function processPrayerTimes(timings, timezone) {
         var prayerMap = {
             'Fajr': { ar: 'الفجر', color: '#6c5b7b' },
@@ -705,6 +727,7 @@
         var prayerMinutes = {};
         var prayerNames = [];
 
+        // حساب الوقت الحالي بناءً على المنطقة الزمنية للمدينة
         var now = new Date();
         var currentMinutes = now.getHours() * 60 + now.getMinutes();
 
@@ -713,8 +736,13 @@
                 var localTimeString = now.toLocaleString("en-US", { timeZone: timezone });
                 var localDate = new Date(localTimeString);
                 currentMinutes = localDate.getHours() * 60 + localDate.getMinutes();
-            } catch (e) {}
+                console.log('🕐 الوقت المحلي للمنطقة (' + timezone + '): ' + localDate.getHours() + ':' + localDate.getMinutes().toString().padStart(2, '0'));
+            } catch (e) {
+                console.warn('⚠️ تعذر استخدام المنطقة الزمنية، استخدام توقيت الجهاز الحالي');
+            }
         }
+
+        console.log('📍 المدينة الحالية: ' + userCity);
 
         for (var en in prayerMap) {
             if (prayerMap.hasOwnProperty(en)) {
@@ -746,6 +774,7 @@
                 targetPrayer = name;
                 targetTime = prayerMin;
                 isAfter = true;
+                console.log('✅ ' + name + ' بدأت منذ ' + (currentMinutes - prayerMin) + ' دقيقة');
                 break;
             }
         }
@@ -757,6 +786,7 @@
                     targetPrayer = name2;
                     targetTime = prayerMinutes[name2];
                     isAfter = false;
+                    console.log('✅ الصلاة القادمة: ' + name2 + ' بعد ' + (prayerMinutes[name2] - currentMinutes) + ' دقيقة');
                     break;
                 }
             }
@@ -765,6 +795,7 @@
                 targetPrayer = 'الفجر';
                 targetTime = prayerMinutes['الفجر'] + 1440;
                 isAfter = false;
+                console.log('✅ الصلاة القادمة: الفجر غداً');
             }
         }
 
@@ -774,6 +805,7 @@
         }
 
         if (isPrayerClosed(targetPrayer)) {
+            console.log('⏭️ ' + targetPrayer + ' مغلقة لهذا اليوم');
             for (var k = 0; k < prayerNames.length; k++) {
                 var name3 = prayerNames[k];
                 if (prayerMinutes[name3] > currentMinutes && !isPrayerClosed(name3)) {
@@ -789,14 +821,24 @@
             var hoursLeft = Math.floor(diffMinutes / 60);
             var minutesLeft = Math.round(diffMinutes % 60);
 
-            var timeString = isAfter ? 'منذ ' + (hoursLeft > 0 ? hoursLeft + ' ساعة و ' : '') + minutesLeft + ' دقيقة'
-                                     : (hoursLeft > 0 ? 'بعد ' + hoursLeft + ' ساعة و ' + minutesLeft + ' دقيقة' : 'بعد ' + minutesLeft + ' دقيقة');
+            var timeString = '';
+            if (isAfter) {
+                timeString = 'منذ ' + (hoursLeft > 0 ? hoursLeft + ' ساعة و ' : '') + minutesLeft + ' دقيقة';
+            } else {
+                if (hoursLeft > 0) {
+                    timeString = 'بعد ' + hoursLeft + ' ساعة و ' + minutesLeft + ' دقيقة';
+                } else {
+                    timeString = 'بعد ' + minutesLeft + ' دقيقة';
+                }
+            }
 
             var color = '#2d7d46';
             for (var en2 in prayerMap) {
-                if (prayerMap.hasOwnProperty(en2) && prayerMap[en2].ar === targetPrayer) {
-                    color = prayerMap[en2].color;
-                    break;
+                if (prayerMap.hasOwnProperty(en2)) {
+                    if (prayerMap[en2].ar === targetPrayer) {
+                        color = prayerMap[en2].color;
+                        break;
+                    }
                 }
             }
 
@@ -809,7 +851,9 @@
 
             currentPrayer = targetPrayer;
 
-            if (!isToastVisible) showToast();
+            if (!isToastVisible) {
+                showToast();
+            }
 
             clearTimeout(window.autoHideTimer);
             window.autoHideTimer = setTimeout(closeToast, 30000);
@@ -819,6 +863,7 @@
             var waitTime2 = (diffMinutes - 20) * 60 * 1000;
             clearTimeout(window.scheduleTimer);
             window.scheduleTimer = setTimeout(fetchPrayerTimes, Math.max(waitTime2, 1000));
+            console.log('⏰ تحديث بعد ' + Math.round(waitTime2/60000) + ' دقيقة');
         }
     }
 
@@ -826,7 +871,10 @@
         toast.classList.remove('show');
         toast.classList.add('hidden');
         isToastVisible = false;
-        if (currentPrayer) setClosedPrayer(currentPrayer);
+        if (currentPrayer) {
+            setClosedPrayer(currentPrayer);
+            console.log('✅ تم إغلاق ' + currentPrayer);
+        }
     }
 
     function showToast() {
@@ -849,7 +897,9 @@
         closeToast();
     });
 
+    console.log('🕌 بدء تشغيل مواقيت الصلاة (تلقائي)...');
     getLocation();
     setInterval(fetchPrayerTimes, 60000);
+    console.log('✅ مواقيت الصلاة - شغالة تلقائي 🕌');
 })();
     </script>
