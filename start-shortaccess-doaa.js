@@ -510,8 +510,8 @@
                 console.log('✅ تذكير الأذكار يعمل');
             })();
  
-           // ============================================================
-// 4️⃣ مواقيت الصلاة - نسخة تلقائية 100%
+// ============================================================
+// 🕐 مواقيت الصلاة - نسخة تلقائية 100%
 // ============================================================
 (function() {
     var toast = document.getElementById('prayerToast');
@@ -533,10 +533,11 @@
     var isToastVisible = false;
     var retryCount = 0;
     var MAX_RETRIES = 3;
-    var userCity = 'مكة المكرمة'; // قيمة افتراضية آمنة
-    var userLat = 21.4225;        // مكة المكرمة
+    var userCity = 'مكة المكرمة';
+    var userLat = 21.4225;
     var userLng = 39.8262;
 
+    // ===== دوال localStorage =====
     function getClosedPrayers() {
         try {
             var data = localStorage.getItem('closedPrayers');
@@ -561,11 +562,11 @@
         return closed[key] === true;
     }
 
-    // ===== طريقة جديدة لتحديد الموقع =====
+    // ===== 🔥 تحديد الموقع تلقائياً (مجاني 100%) =====
     function getLocationByIP() {
         console.log('🌐 جاري تحديد الموقع التلقائي...');
 
-        // المحاولة 1: استخدام ipapi.co (مجانية وتدعم HTTPS)
+        // المحاولة 1: ipapi.co
         fetch('https://ipapi.co/json/')
             .then(function(response) {
                 if (!response.ok) throw new Error('فشل ipapi.co');
@@ -576,7 +577,7 @@
                     userLat = data.latitude;
                     userLng = data.longitude;
                     userCity = data.city || data.region || 'مكة المكرمة';
-                    console.log('✅ المدينة (ipapi): ' + userCity);
+                    console.log('✅ المدينة: ' + userCity);
                     console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
                     fetchPrayerTimes();
                 } else {
@@ -590,11 +591,10 @@
             });
     }
 
-    // ===== طريقة احتياطية ثانية =====
+    // ===== طريقة احتياطية =====
     function getLocationFallback() {
         console.log('🌐 محاولة تحديد الموقع (طريقة احتياطية)...');
 
-        // استخدام freegeoip.app (مجانية)
         fetch('https://freegeoip.app/json/')
             .then(function(response) {
                 if (!response.ok) throw new Error('فشل freegeoip');
@@ -605,7 +605,7 @@
                     userLat = data.latitude;
                     userLng = data.longitude;
                     userCity = data.city || data.region_name || 'مكة المكرمة';
-                    console.log('✅ المدينة (freegeoip): ' + userCity);
+                    console.log('✅ المدينة: ' + userCity);
                     console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
                     fetchPrayerTimes();
                 } else {
@@ -619,6 +619,7 @@
             });
     }
 
+    // ===== جلب مواقيت الصلاة =====
     function fetchPrayerTimes() {
         var url = 'https://api.aladhan.com/v1/timings?latitude=' + userLat + '&longitude=' + userLng + '&method=4';
         console.log('📡 جاري جلب مواقيت الصلاة لـ ' + userCity + '...');
@@ -655,6 +656,7 @@
         }
     }
 
+    // ===== معالجة المواقيت وعرض الإشعار =====
     function processPrayerTimes(timings) {
         var prayerMap = {
             'Fajr': { ar: 'الفجر', color: '#6c5b7b' },
