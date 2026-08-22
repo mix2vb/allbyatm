@@ -1,5 +1,6 @@
 // ============================================================
-// 📦 كلمات وأدعية وأذكار - النسخة الآمنة المعدلة
+// 📦 كلمات وأدعية وأذكار - النسخة الآمنة المعدلة بالكامل
+// تم إصلاح: مواقيت الصلاة، تذكير الأذكار، كارت الترحيب
 // ============================================================
 
 (function() {
@@ -9,7 +10,7 @@
     // 1️⃣ توست الدعاء الصغير - مع التحقق من وجود العناصر
     // ============================================================
     (function() {
-        const items = [
+        var items = [
             { text: "اللهمَّ اكفني بحلالك عن حرامك", icon: "fa-hand-peace", color: "#b68b6b" },
             { text: "رَبَّنَا لَا تُزِغْ قُلُوبَنَا", icon: "fa-heart", color: "#c0392b" },
             { text: "اللهم إني أسألك العفو والعافية", icon: "fa-shield-heart", color: "#2980b9" },
@@ -37,26 +38,25 @@
             { text: "إِنَّ اللَّهَ مَعَ الصَّابِرِينَ", icon: "fa-shield", color: "#2c3e50" }
         ];
 
-        // ===== التحقق من وجود العناصر قبل استخدامها =====
-        const toast = document.getElementById('toastDua');
+        var toast = document.getElementById('toastDua');
         if (!toast) {
-            console.warn('⚠️ عنصر toastDua غير موجود، تخطي توست الدعاء');
+            console.warn('⚠️ توست الدعاء: العنصر غير موجود');
             return;
         }
         
-        const textEl = document.getElementById('toastText');
-        const iconEl = document.getElementById('toastIcon');
-        const closeBtn = document.getElementById('closeToast');
+        var textEl = document.getElementById('toastText');
+        var iconEl = document.getElementById('toastIcon');
+        var closeBtn = document.getElementById('closeToast');
 
         if (!textEl || !iconEl) {
-            console.warn('⚠️ عناصر توست الدعاء غير مكتملة');
+            console.warn('⚠️ توست الدعاء: العناصر غير مكتملة');
             return;
         }
 
-        let lastIndex = -1;
+        var lastIndex = -1;
 
         function getRandomItem() {
-            let newIndex;
+            var newIndex;
             if (items.length > 1) {
                 do {
                     newIndex = Math.floor(Math.random() * items.length);
@@ -69,7 +69,7 @@
         }
 
         function setToastContent() {
-            const item = getRandomItem();
+            var item = getRandomItem();
             textEl.textContent = item.text;
             iconEl.innerHTML = '<i class="fas ' + item.icon + '"></i>';
             iconEl.style.color = item.color || '#b68b6b';
@@ -80,7 +80,6 @@
             toast.classList.add('hidden');
         }
 
-        // ===== إضافة الأحداث بأمان =====
         if (closeBtn) {
             closeBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -99,38 +98,39 @@
             closeToast();
         }, 30000);
 
-        console.log('✅ توست الدعاء الصغير يعمل - النصوص ظاهرة بالكامل');
+        console.log('✅ توست الدعاء الصغير يعمل');
     })();
 
     // ============================================================
-    // 2️⃣ كارت الترحيب - مع التحقق من وجود العناصر
+    // 2️⃣ كارت الترحيب - مع تتبع عودة المستخدم
     // ============================================================
     (function() {
-        const overlay = document.getElementById('welcome-joy-overlay');
+        var overlay = document.getElementById('welcome-joy-overlay');
         if (!overlay) {
-            console.warn('⚠️ عنصر welcome-joy-overlay غير موجود، تخطي كارت الترحيب');
+            console.warn('⚠️ كارت الترحيب: العنصر غير موجود');
             return;
         }
 
-        const VISIT_KEY = 'welcome_visit_timer';
+        var VISIT_KEY = 'welcome_visit_timer';
+        var CLOSE_KEY = 'welcome_closed';
         
         function launchCelebration(containerId) {
-            const cannon = document.getElementById(containerId);
+            var cannon = document.getElementById(containerId);
             if (!cannon) return;
             cannon.innerHTML = '';
             
-            const colors = ['#f7d794', '#f8c291', '#e8a87c', '#d4a373', '#f3a683', '#ffbe0b', '#fb5607', '#3a86ff', '#a8d5ba', '#b8a9c9', '#ff006e', '#8338ec'];
-            const emojis = ['🌸', '🌺', '✨', '⭐', '💫', '♥', '❤️', '🌙', '🦋', '🌈', '🌷', '🌟'];
+            var colors = ['#f7d794', '#f8c291', '#e8a87c', '#d4a373', '#f3a683', '#ffbe0b', '#fb5607', '#3a86ff', '#a8d5ba', '#b8a9c9', '#ff006e', '#8338ec'];
+            var emojis = ['🌸', '🌺', '✨', '⭐', '💫', '♥', '❤️', '🌙', '🦋', '🌈', '🌷', '🌟'];
             
-            for (let i = 0; i < 70; i++) {
-                const c = document.createElement('div');
+            for (var i = 0; i < 70; i++) {
+                var c = document.createElement('div');
                 c.className = 'joy-confetti';
-                const angle = Math.random() * 360;
-                const distance = 100 + Math.random() * 350;
-                const tx = Math.cos(angle) * distance;
-                const ty = Math.sin(angle) * distance;
-                const tx2 = Math.cos(angle + (Math.random() - 0.5) * 60) * (distance * 1.3);
-                const ty2 = Math.sin(angle + (Math.random() - 0.5) * 60) * (distance * 1.3);
+                var angle = Math.random() * 360;
+                var distance = 100 + Math.random() * 350;
+                var tx = Math.cos(angle) * distance;
+                var ty = Math.sin(angle) * distance;
+                var tx2 = Math.cos(angle + (Math.random() - 0.5) * 60) * (distance * 1.3);
+                var ty2 = Math.sin(angle + (Math.random() - 0.5) * 60) * (distance * 1.3);
                 c.style.setProperty('--tx', tx + 'px');
                 c.style.setProperty('--ty', ty + 'px');
                 c.style.setProperty('--tx2', tx2 + 'px');
@@ -146,8 +146,8 @@
                 cannon.appendChild(c);
             }
             
-            for (let i = 0; i < 16; i++) {
-                const el = document.createElement('div');
+            for (var j = 0; j < 16; j++) {
+                var el = document.createElement('div');
                 el.className = 'joy-float';
                 el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
                 el.style.left = (5 + Math.random() * 90) + '%';
@@ -158,17 +158,17 @@
                 cannon.appendChild(el);
             }
             
-            for (let i = 0; i < 25; i++) {
-                const el = document.createElement('div');
-                el.className = 'joy-sparkle';
-                el.textContent = ['✦', '✧', '·', '⋆', '✶', '✴'][Math.floor(Math.random() * 6)];
-                el.style.left = Math.random() * 100 + '%';
-                el.style.top = Math.random() * 100 + '%';
-                el.style.color = colors[Math.floor(Math.random() * colors.length)];
-                el.style.fontSize = (0.5 + Math.random() * 1) + 'rem';
-                el.style.animationDelay = (Math.random() * 2.5) + 's';
-                el.style.animationDuration = (1.5 + Math.random() * 2) + 's';
-                cannon.appendChild(el);
+            for (var k = 0; k < 25; k++) {
+                var sp = document.createElement('div');
+                sp.className = 'joy-sparkle';
+                sp.textContent = ['✦', '✧', '·', '⋆', '✶', '✴'][Math.floor(Math.random() * 6)];
+                sp.style.left = Math.random() * 100 + '%';
+                sp.style.top = Math.random() * 100 + '%';
+                sp.style.color = colors[Math.floor(Math.random() * colors.length)];
+                sp.style.fontSize = (0.5 + Math.random() * 1) + 'rem';
+                sp.style.animationDelay = (Math.random() * 2.5) + 's';
+                sp.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+                cannon.appendChild(sp);
             }
             
             setTimeout(function() {
@@ -177,41 +177,47 @@
         }
         
         function closeJoyPopup(id) {
-            const el = document.getElementById(id);
+            var el = document.getElementById(id);
             if (el) {
                 el.style.opacity = '0';
                 setTimeout(function() {
                     el.style.display = 'none';
                     el.style.opacity = '1';
-                    const cannon = document.getElementById('welcome-confetti-cannon');
+                    localStorage.setItem(CLOSE_KEY, 'true');
+                    var cannon = document.getElementById('welcome-confetti-cannon');
                     if (cannon) cannon.innerHTML = '';
                 }, 500);
             }
         }
 
-        // جعل الدالة عامة
         window.closeJoyPopup = closeJoyPopup;
         
         function initWelcomeSystem() {
-            const now = new Date();
-            const currentTime = now.getTime();
-            const lastVisit = localStorage.getItem(VISIT_KEY);
-            const dayMs = 24 * 60 * 60 * 1000;
-            
-            if (!lastVisit) {
-                localStorage.setItem(VISIT_KEY, currentTime);
-                console.log('👋 أول زيارة');
+            // التحقق من أن المستخدم لم يغلق الكارت يدوياً في هذه الجلسة
+            if (localStorage.getItem(CLOSE_KEY) === 'true') {
+                console.log('⏭️ تم إغلاق كارت الترحيب يدوياً');
                 return;
             }
             
-            const diff = currentTime - parseInt(lastVisit);
-            const days = Math.floor(diff / dayMs);
+            var now = new Date();
+            var currentTime = now.getTime();
+            var lastVisit = localStorage.getItem(VISIT_KEY);
+            var dayMs = 24 * 60 * 60 * 1000;
+            
+            if (!lastVisit) {
+                localStorage.setItem(VISIT_KEY, currentTime);
+                console.log('👋 أول زيارة - لن يظهر الكارت');
+                return;
+            }
+            
+            var diff = currentTime - parseInt(lastVisit);
+            var days = Math.floor(diff / dayMs);
             
             if (days >= 2) {
                 console.log('📆 غاب ' + days + ' يوم - 🎉 يظهر الكارت');
                 
-                const dayElem = document.getElementById('welcome-days-count');
-                let text = '';
+                var dayElem = document.getElementById('welcome-days-count');
+                var text = '';
                 if (days === 2) text = 'بقالنا يومين مشفناكش!';
                 else if (days <= 5) text = 'بقالنا ' + days + ' أيام مشفناكش!';
                 else if (days <= 10) text = 'من ' + days + ' يوم مشفناكش!';
@@ -221,6 +227,7 @@
                 overlay.style.display = 'flex';
                 launchCelebration('welcome-confetti-cannon');
                 localStorage.setItem(VISIT_KEY, currentTime);
+                localStorage.removeItem(CLOSE_KEY); // إعادة تعيين الإغلاق اليدوي
                 
                 setTimeout(function() {
                     closeJoyPopup('welcome-joy-overlay');
@@ -231,14 +238,14 @@
             }
         }
         
-        // ===== إغلاق عند الضغط بالخارج =====
-        window.addEventListener('click', function(e) {
-            if (e.target.classList.contains('joy-main-wrapper')) {
-                closeJoyPopup(e.target.id);
+        // ===== إغلاق عند الضغط على الخلفية =====
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                closeJoyPopup('welcome-joy-overlay');
             }
         });
         
-        // ===== بدء التشغيل التلقائي =====
+        // ===== بدء التشغيل =====
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(initWelcomeSystem, 2000);
@@ -247,29 +254,29 @@
             setTimeout(initWelcomeSystem, 2000);
         }
         
-        console.log('🌙 كارت الترحيب يعمل تلقائياً - رسالة صغيرة أعلى يسار 🎊');
+        console.log('🌙 كارت الترحيب يعمل تلقائياً');
     })();
 
     // ============================================================
-    // 3️⃣ تذكير أذكار الصباح والمساء وسورة الكهف - مع التحقق
+    // 3️⃣ تذكير أذكار الصباح والمساء وسورة الكهف
     // ============================================================
     (function() {
-        const toast = document.getElementById('reminderToast');
+        var toast = document.getElementById('reminderToast');
         if (!toast) {
-            console.warn('⚠️ عنصر reminderToast غير موجود، تخطي تذكير الأذكار');
+            console.warn('⚠️ تذكير الأذكار: العنصر غير موجود');
             return;
         }
         
-        const textEl = document.getElementById('reminderText');
-        const iconEl = document.getElementById('reminderIcon');
-        const closeBtn = document.getElementById('closeReminderToast');
+        var textEl = document.getElementById('reminderText');
+        var iconEl = document.getElementById('reminderIcon');
+        var closeBtn = document.getElementById('closeReminderToast');
 
         if (!textEl || !iconEl) {
-            console.warn('⚠️ عناصر التذكير غير مكتملة');
+            console.warn('⚠️ تذكير الأذكار: العناصر غير مكتملة');
             return;
         }
 
-        const REMINDER_CONFIG = {
+        var REMINDER_CONFIG = {
             morning: {
                 name: 'أذكار الصباح',
                 startHour: 5,
@@ -306,12 +313,13 @@
             }
         };
 
-        let currentReminder = null;
-        let isToastVisible = false;
+        var currentReminder = null;
+        var isToastVisible = false;
+        var reminderInterval = null;
 
         function getClosedReminders() {
             try {
-                const data = localStorage.getItem('closedReminders');
+                var data = localStorage.getItem('closedReminders');
                 return data ? JSON.parse(data) : {};
             } catch {
                 return {};
@@ -319,17 +327,17 @@
         }
         
         function setClosedReminder(type) {
-            const closed = getClosedReminders();
-            const today = new Date().toDateString();
-            const key = today + '_' + type;
+            var closed = getClosedReminders();
+            var today = new Date().toDateString();
+            var key = today + '_' + type;
             closed[key] = true;
             localStorage.setItem('closedReminders', JSON.stringify(closed));
         }
         
         function isReminderClosed(type) {
-            const closed = getClosedReminders();
-            const today = new Date().toDateString();
-            const key = today + '_' + type;
+            var closed = getClosedReminders();
+            var today = new Date().toDateString();
+            var key = today + '_' + type;
             return closed[key] === true;
         }
 
@@ -352,7 +360,7 @@
             setTimeout(function() {
                 toast.classList.add('show');
                 isToastVisible = true;
-            }, 150);
+            }, 200);
         }
 
         if (closeBtn) {
@@ -365,7 +373,7 @@
         toast.addEventListener('click', function(e) {
             if (e.target.closest('.close')) return;
             if (currentReminder) {
-                const config = REMINDER_CONFIG[currentReminder];
+                var config = REMINDER_CONFIG[currentReminder];
                 if (config && config.link) {
                     window.open(config.link, '_blank');
                 }
@@ -374,25 +382,25 @@
         });
 
         function updateToastContent(reminderType) {
-            const config = REMINDER_CONFIG[reminderType];
+            var config = REMINDER_CONFIG[reminderType];
             if (!config) return;
 
-            const now = new Date();
-            const currentHour = now.getHours();
-            const currentMinute = now.getMinutes();
+            var now = new Date();
+            var currentHour = now.getHours();
+            var currentMinute = now.getMinutes();
             
-            let timeString = '';
-            let extraText = '';
+            var timeString = '';
+            var extraText = '';
             
             if (reminderType === 'friday') {
                 extraText = '<br><span style="font-size:0.65rem;color:#2e7d32;display:block;max-width:300px;margin:4px auto;">' + config.hadith + '</span>';
                 timeString = '🕌 يوم عظيم - اغتنم الأجر';
             } else if (reminderType === 'morning' || reminderType === 'evening') {
-                const endHour = config.endHour;
-                const remainingMinutes = (endHour * 60) - (currentHour * 60 + currentMinute);
+                var endHour = config.endHour;
+                var remainingMinutes = (endHour * 60) - (currentHour * 60 + currentMinute);
                 if (remainingMinutes > 0) {
-                    const hours = Math.floor(remainingMinutes / 60);
-                    const minutes = Math.round(remainingMinutes % 60);
+                    var hours = Math.floor(remainingMinutes / 60);
+                    var minutes = Math.round(remainingMinutes % 60);
                     timeString = '⏰ متبقي ' + (hours > 0 ? hours + ' ساعة و ' : '') + minutes + ' دقيقة';
                 } else {
                     timeString = '⏰ وقت مميز للذكر';
@@ -408,10 +416,10 @@
         }
 
         function checkReminderTime() {
-            const now = new Date();
-            const currentHour = now.getHours();
-            const currentMinute = now.getMinutes();
-            const currentTime = currentHour * 60 + currentMinute;
+            var now = new Date();
+            var currentHour = now.getHours();
+            var currentMinute = now.getMinutes();
+            var currentTime = currentHour * 60 + currentMinute;
 
             // التحقق من يوم الجمعة
             if (isFriday()) {
@@ -429,12 +437,12 @@
                 }
             }
 
-            const morningStart = REMINDER_CONFIG.morning.startHour * 60;
-            const morningEnd = REMINDER_CONFIG.morning.endHour * 60;
-            const eveningStart = REMINDER_CONFIG.evening.startHour * 60;
-            const eveningEnd = REMINDER_CONFIG.evening.endHour * 60;
+            var morningStart = REMINDER_CONFIG.morning.startHour * 60;
+            var morningEnd = REMINDER_CONFIG.morning.endHour * 60;
+            var eveningStart = REMINDER_CONFIG.evening.startHour * 60;
+            var eveningEnd = REMINDER_CONFIG.evening.endHour * 60;
 
-            let targetReminder = null;
+            var targetReminder = null;
 
             if (currentTime >= morningStart && currentTime <= morningEnd) {
                 if (!isReminderClosed('morning')) {
@@ -460,86 +468,53 @@
                 }
             } else {
                 if (isToastVisible) closeToast();
-                
-                let nextStart = null;
-                const currentTotal = currentHour * 60 + currentMinute;
-                
-                if (isFriday()) {
-                    if (!isReminderClosed('friday')) {
-                        setTimeout(checkReminderTime, 300000);
-                        return;
-                    }
-                }
-                
-                if (currentTotal < morningStart) {
-                    nextStart = morningStart;
-                } else if (currentTotal < eveningStart) {
-                    nextStart = eveningStart;
-                } else if (currentTotal < morningStart + 1440) {
-                    nextStart = morningStart + 1440;
-                }
-                
-                if (nextStart !== null) {
-                    const diffMinutes = nextStart - currentTotal;
-                    if (diffMinutes > 5) {
-                        const waitTime = (diffMinutes - 5) * 60 * 1000;
-                        clearTimeout(window.scheduleTimer);
-                        window.scheduleTimer = setTimeout(checkReminderTime, Math.max(waitTime, 5000));
-                    } else {
-                        setTimeout(checkReminderTime, 5000);
-                    }
-                } else {
-                    setTimeout(checkReminderTime, 60000);
-                }
             }
         }
 
-        console.log('🌅 بدء تشغيل كود تذكير أذكار الصباح والمساء وسورة الكهف...');
+        console.log('🌅 بدء تشغيل تذكير الأذكار...');
         console.log('📅 اليوم: ' + (isFriday() ? 'الجمعة 🕌' : new Date().toLocaleDateString('ar-EG', { weekday: 'long' })));
         
-        setTimeout(checkReminderTime, 1000);
-        setInterval(checkReminderTime, 60000);
+        // التحقق كل دقيقة
+        checkReminderTime();
+        reminderInterval = setInterval(checkReminderTime, 60000);
 
-        console.log('✅ كود التذكير يعمل بنجاح');
+        console.log('✅ تذكير الأذكار يعمل بنجاح');
         console.log('🌅 أوقات الصباح: 5:00 - 10:00');
         console.log('🌙 أوقات المساء: 17:00 - 20:00');
         console.log('📖 تذكير سورة الكهف: يوم الجمعة طوال اليوم');
     })();
 
     // ============================================================
-    // 4️⃣ مواقيت الصلاة - مع التحقق من وجود العناصر
+    // 4️⃣ مواقيت الصلاة - مع تحديد الموقع بدقة
     // ============================================================
     (function() {
-        const toast = document.getElementById('prayerToast');
+        var toast = document.getElementById('prayerToast');
         if (!toast) {
-            console.warn('⚠️ عنصر prayerToast غير موجود، تخطي مواقيت الصلاة');
+            console.warn('⚠️ مواقيت الصلاة: العنصر غير موجود');
             return;
         }
         
-        const textEl = document.getElementById('prayerText');
-        const iconEl = document.getElementById('prayerIcon');
-        const closeBtn = document.getElementById('closePrayerToast');
+        var textEl = document.getElementById('prayerText');
+        var iconEl = document.getElementById('prayerIcon');
+        var closeBtn = document.getElementById('closePrayerToast');
 
         if (!textEl || !iconEl) {
-            console.warn('⚠️ عناصر مواقيت الصلاة غير مكتملة');
+            console.warn('⚠️ مواقيت الصلاة: العناصر غير مكتملة');
             return;
         }
 
-        let currentPrayer = null;
-        let currentPrayerTime = null;
-        let isToastVisible = false;
-        let retryCount = 0;
-        const MAX_RETRIES = 3;
-        let userCity = 'الرياض';
-        let userCountry = 'السعودية';
-        let userTimezone = 'Asia/Riyadh';
-        
-        const RIYADH_LAT = 24.7136;
-        const RIYADH_LNG = 46.6753;
+        var currentPrayer = null;
+        var isToastVisible = false;
+        var retryCount = 0;
+        var MAX_RETRIES = 3;
+        var userCity = 'الرياض';
+        var userLat = 24.7136;
+        var userLng = 46.6753;
+        var prayerInterval = null;
         
         function getClosedPrayers() {
             try {
-                const data = localStorage.getItem('closedPrayers');
+                var data = localStorage.getItem('closedPrayers');
                 return data ? JSON.parse(data) : {};
             } catch {
                 return {};
@@ -547,82 +522,51 @@
         }
         
         function setClosedPrayer(prayerName) {
-            const closed = getClosedPrayers();
-            const today = new Date().toDateString();
-            const key = today + '_' + prayerName;
+            var closed = getClosedPrayers();
+            var today = new Date().toDateString();
+            var key = today + '_' + prayerName;
             closed[key] = true;
             localStorage.setItem('closedPrayers', JSON.stringify(closed));
         }
         
         function isPrayerClosed(prayerName) {
-            const closed = getClosedPrayers();
-            const today = new Date().toDateString();
-            const key = today + '_' + prayerName;
+            var closed = getClosedPrayers();
+            var today = new Date().toDateString();
+            var key = today + '_' + prayerName;
             return closed[key] === true;
         }
 
-        function getAccurateTime() {
-            return fetch('https://worldtimeapi.org/api/timezone/' + userTimezone)
-                .then(function(response) {
-                    if (!response.ok) throw new Error('فشل جلب التوقيت');
-                    return response.json();
-                })
-                .then(function(data) {
-                    if (data && data.utc_datetime) {
-                        return new Date(data.utc_datetime);
-                    }
-                    throw new Error('تنسيق غير صحيح');
-                })
-                .catch(function() {
-                    console.warn('⚠️ فشل جلب التوقيت من السيرفر، استخدام توقيت الجهاز');
-                    return new Date();
-                });
-        }
-
         function getLocationByIP() {
-            console.log('🌐 جاري تحديد الموقع عن طريق IP...');
+            console.log('🌐 جاري تحديد الموقع...');
             
+            // محاولة تحديد الموقع عبر IP
             fetch('https://ip-api.com/json/')
-                .then(function(response) { return response.json(); })
+                .then(function(response) { 
+                    if (!response.ok) throw new Error('فشل جلب الموقع');
+                    return response.json(); 
+                })
                 .then(function(data) {
                     if (data && data.status === 'success') {
-                        const lat = data.lat;
-                        const lng = data.lon;
-                        const city = data.city || 'الرياض';
-                        const country = data.country || 'السعودية';
-                        const timezone = data.timezone || 'Asia/Riyadh';
-                        
-                        userCity = city;
-                        userCountry = country;
-                        userTimezone = timezone;
-                        
-                        console.log('✅ المدينة: ' + city + ', الدولة: ' + country);
-                        console.log('🕐 المنطقة الزمنية: ' + timezone);
-                        console.log('📍 الإحداثيات: ' + lat + ', ' + lng);
-                        
-                        getAccurateTime().then(function(serverTime) {
-                            fetchPrayerTimes(lat, lng, serverTime);
-                        });
+                        userLat = data.lat || 24.7136;
+                        userLng = data.lon || 46.6753;
+                        userCity = data.city || 'الرياض';
+                        console.log('✅ المدينة: ' + userCity);
+                        console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
+                        fetchPrayerTimes();
                     } else {
                         console.warn('⚠️ فشل تحديد الموقع، استخدام الرياض');
-                        userCity = 'الرياض';
-                        getAccurateTime().then(function(serverTime) {
-                            fetchPrayerTimes(RIYADH_LAT, RIYADH_LNG, serverTime);
-                        });
+                        fetchPrayerTimes();
                     }
                 })
                 .catch(function() {
-                    console.warn('⚠️ فشل جلب IP، استخدام الرياض');
-                    userCity = 'الرياض';
-                    getAccurateTime().then(function(serverTime) {
-                        fetchPrayerTimes(RIYADH_LAT, RIYADH_LNG, serverTime);
-                    });
+                    console.warn('⚠️ فشل تحديد الموقع، استخدام الرياض');
+                    fetchPrayerTimes();
                 });
         }
 
-        function fetchPrayerTimes(lat, lng, currentTime) {
-            var url = 'https://api.aladhan.com/v1/timings?latitude=' + lat + '&longitude=' + lng + '&method=4';
-            console.log('📡 جاري جلب المواقيت...');
+        function fetchPrayerTimes() {
+            var url = 'https://api.aladhan.com/v1/timings?latitude=' + userLat + '&longitude=' + userLng + '&method=4';
+            console.log('📡 جاري جلب مواقيت الصلاة...');
             
             fetch(url)
                 .then(function(response) { return response.json(); })
@@ -631,7 +575,7 @@
                         retryCount = 0;
                         var timings = data.data.timings;
                         console.log('🕐 مواقيت الصلاة:', timings);
-                        processPrayerTimes(timings, currentTime);
+                        processPrayerTimes(timings);
                     } else {
                         console.error('❌ تنسيق البيانات غير صحيح');
                         handleError();
@@ -648,15 +592,15 @@
             if (retryCount <= MAX_RETRIES) {
                 var waitTime = 5000 * retryCount;
                 console.log('🔄 محاولة ' + retryCount + '/' + MAX_RETRIES + ' بعد ' + (waitTime/1000) + ' ثانية');
-                setTimeout(getPrayerTimes, waitTime);
+                setTimeout(fetchPrayerTimes, waitTime);
             } else {
                 console.error('❌ فشل الاتصال، المحاولة بعد 5 دقائق');
-                setTimeout(getPrayerTimes, 300000);
+                setTimeout(fetchPrayerTimes, 300000);
                 retryCount = 0;
             }
         }
 
-        function processPrayerTimes(timings, currentTime) {
+        function processPrayerTimes(timings) {
             var prayerMap = {
                 'Fajr': { ar: 'الفجر', color: '#6c5b7b' },
                 'Dhuhr': { ar: 'الظهر', color: '#f39c12' },
@@ -668,8 +612,9 @@
             var prayerMinutes = {};
             var prayerNames = [];
             
-            var currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-            console.log('🕐 الوقت الحالي: ' + currentTime.getHours() + ':' + currentTime.getMinutes().toString().padStart(2, '0'));
+            var now = new Date();
+            var currentMinutes = now.getHours() * 60 + now.getMinutes();
+            console.log('🕐 الوقت الحالي: ' + now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0'));
             console.log('📍 ' + userCity);
             
             for (var en in prayerMap) {
@@ -695,6 +640,7 @@
             var targetTime = null;
             var isAfter = false;
             
+            // البحث عن صلاة انتهت خلال 20 دقيقة
             for (var i = 0; i < prayerNames.length; i++) {
                 var name = prayerNames[i];
                 var prayerMin = prayerMinutes[name];
@@ -707,6 +653,7 @@
                 }
             }
             
+            // إذا لم نجد صلاة انتهت حديثاً، نبحث عن الصلاة القادمة
             if (!targetPrayer) {
                 for (var j = 0; j < prayerNames.length; j++) {
                     var name2 = prayerNames[j];
@@ -719,6 +666,7 @@
                     }
                 }
                 
+                // إذا لم نجد صلاة قادمة، نذهب للفجر غداً
                 if (!targetPrayer) {
                     targetPrayer = 'الفجر';
                     targetTime = prayerMinutes['الفجر'] + 1440;
@@ -732,19 +680,22 @@
                 diffMinutes = currentMinutes - targetTime;
             }
             
+            // التحقق من إغلاق الصلاة
             if (isPrayerClosed(targetPrayer)) {
                 console.log('⏭️ ' + targetPrayer + ' مغلقة لهذا اليوم');
+                // البحث عن الصلاة التالية غير المغلقة
                 for (var k = 0; k < prayerNames.length; k++) {
                     var name3 = prayerNames[k];
                     if (prayerMinutes[name3] > currentMinutes && !isPrayerClosed(name3)) {
                         var diff = prayerMinutes[name3] - currentMinutes;
-                        setTimeout(getPrayerTimes, (diff - 20) * 60 * 1000);
+                        setTimeout(fetchPrayerTimes, (diff - 20) * 60 * 1000);
                         return;
                     }
                 }
                 return;
             }
             
+            // عرض التذكير إذا كان الوقت مناسباً
             if ((!isAfter && diffMinutes <= 20 && diffMinutes > 0) || (isAfter && diffMinutes <= 20)) {
                 var hoursLeft = Math.floor(diffMinutes / 60);
                 var minutesLeft = Math.round(diffMinutes % 60);
@@ -778,7 +729,6 @@
                 toast.style.borderTopColor = color;
                 
                 currentPrayer = targetPrayer;
-                currentPrayerTime = targetTime;
                 
                 if (!isToastVisible) {
                     showToast();
@@ -791,7 +741,7 @@
                 if (isToastVisible) closeToast();
                 var waitTime2 = (diffMinutes - 20) * 60 * 1000;
                 clearTimeout(window.scheduleTimer);
-                window.scheduleTimer = setTimeout(getPrayerTimes, Math.max(waitTime2, 1000));
+                window.scheduleTimer = setTimeout(fetchPrayerTimes, Math.max(waitTime2, 1000));
                 console.log('⏰ تحديث بعد ' + Math.round(waitTime2/60000) + ' دقيقة');
             }
         }
@@ -811,7 +761,7 @@
             setTimeout(function() {
                 toast.classList.add('show');
                 isToastVisible = true;
-            }, 150);
+            }, 200);
         }
 
         if (closeBtn) {
@@ -826,12 +776,12 @@
             closeToast();
         });
 
-        function getPrayerTimes() {
-            getLocationByIP();
-        }
+        // ===== بدء التشغيل =====
+        console.log('🕌 بدء تشغيل مواقيت الصلاة...');
+        getLocationByIP();
         
-        getPrayerTimes();
-        setInterval(getPrayerTimes, 60000);
+        // تحديث كل 60 ثانية
+        prayerInterval = setInterval(fetchPrayerTimes, 60000);
 
         console.log('✅ مواقيت الصلاة - شغالة 🕌');
         console.log('📍 المدينة: ' + userCity);
