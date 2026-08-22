@@ -511,7 +511,7 @@
             })();
  
 // ============================================================
-// 🕐 مواقيت الصلاة - نسخة تلقائية 100% (شاملة الحلول الاحتياطية)
+// 🕐 مواقيت الصلاة - نسخة تلقائية 100% (شاملة الحلول الاحتياطية والتوقيت العالمي)
 // ============================================================
 (function() {
     var toast = document.getElementById('prayerToast');
@@ -687,8 +687,9 @@
                 if (data && data.code === 200 && data.data && data.data.timings) {
                     retryCount = 0;
                     var timings = data.data.timings;
+                    var timezone = (data.data.meta && data.data.meta.timezone) ? data.data.meta.timezone : null;
                     console.log('🕐 مواقيت الصلاة:', timings);
-                    processPrayerTimes(timings);
+                    processPrayerTimes(timings, timezone);
                 } else {
                     console.error('❌ تنسيق البيانات غير صحيح');
                     handleError();
@@ -713,8 +714,8 @@
         }
     }
 
-    // ===== معالجة المواقيت =====
-    function processPrayerTimes(timings) {
+    // ===== معالجة المواقيت مع حساب التوقيت العالمي للمنطقة =====
+    function processPrayerTimes(timings, timezone) {
         var prayerMap = {
             'Fajr': { ar: 'الفجر', color: '#6c5b7b' },
             'Dhuhr': { ar: 'الظهر', color: '#f39c12' },
@@ -726,10 +727,22 @@
         var prayerMinutes = {};
         var prayerNames = [];
 
+        // حساب الوقت الحالي بناءً على المنطقة الزمنية للمدينة
         var now = new Date();
         var currentMinutes = now.getHours() * 60 + now.getMinutes();
-        console.log('🕐 الوقت الحالي: ' + now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0'));
-        console.log('📍 ' + userCity);
+
+        if (timezone) {
+            try {
+                var localTimeString = now.toLocaleString("en-US", { timeZone: timezone });
+                var localDate = new Date(localTimeString);
+                currentMinutes = localDate.getHours() * 60 + localDate.getMinutes();
+                console.log('🕐 الوقت المحلي للمنطقة (' + timezone + '): ' + localDate.getHours() + ':' + localDate.getMinutes().toString().padStart(2, '0'));
+            } catch (e) {
+                console.warn('⚠️ تعذر استخدام المنطقة الزمنية، استخدام توقيت الجهاز الحالي');
+            }
+        }
+
+        console.log('📍 المدينة الحالية: ' + userCity);
 
         for (var en in prayerMap) {
             if (prayerMap.hasOwnProperty(en)) {
