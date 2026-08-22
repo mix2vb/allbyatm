@@ -511,7 +511,7 @@
             })();
  
 // ============================================================
-// 🕐 مواقيت الصلاة - نسخة تلقائية 100%
+// 🕐 مواقيت الصلاة - نسخة تلقائية 100% (باستخدام Geolocation API)
 // ============================================================
 (function() {
     var toast = document.getElementById('prayerToast');
@@ -536,6 +536,7 @@
     var userCity = 'مكة المكرمة';
     var userLat = 21.4225;
     var userLng = 39.8262;
+    var locationFetched = false;
 
     // ===== دوال localStorage =====
     function getClosedPrayers() {
@@ -562,11 +563,70 @@
         return closed[key] === true;
     }
 
-    // ===== 🔥 تحديد الموقع التلقائي (بديل ip-api.com) =====
-    function getLocationByIP() {
-        console.log('🌐 جاري تحديد الموقع التلقائي...');
+    // ===== 🔥 تحديد الموقع باستخدام Geolocation API (الأفضل والأدق) =====
+    function getLocation() {
+        console.log('🌐 جاري تحديد الموقع عبر المتصفح...');
 
-        // المحاولة 1: ipapi.co (مجانية، تدعم HTTPS)
+        // التحقق من وجود Geolocation API
+        if (!navigator.geolocation) {
+            console.warn('⚠️ المتصفح لا يدعم تحديد الموقع، استخدام مكة كافتراضي');
+            fetchPrayerTimes();
+            return;
+        }
+
+        // طلب الموقع من المتصفح
+        navigator.geolocation.getCurrentPosition(
+            // نجاح
+            function(position) {
+                userLat = position.coords.latitude;
+                userLng = position.coords.longitude;
+                locationFetched = true;
+                console.log('✅ الموقع تم تحديده بدقة عالية');
+                console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
+                
+                // جلب اسم المدينة من الإحداثيات (عكسياً)
+                getCityName(userLat, userLng);
+            },
+            // فشل - استخدم طريقة احتياطية
+            function(error) {
+                console.warn('⚠️ فشل تحديد الموقع عبر المتصفح:', error.message);
+                console.log('🔄 استخدام طريقة تحديد الموقع عبر IP كبديل...');
+                getLocationByIP();
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            }
+        );
+    }
+
+    // ===== جلب اسم المدينة من الإحداثيات (Reverse Geocoding) =====
+    function getCityName(lat, lng) {
+        var url = 'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lng + '&localityLanguage=ar';
+
+        fetch(url)
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data && data.city) {
+                    userCity = data.city || data.locality || data.principalSubdivision || 'مكة المكرمة';
+                    console.log('✅ المدينة: ' + userCity);
+                } else {
+                    console.warn('⚠️ فشل جلب اسم المدينة، استخدام مكة كافتراضي');
+                }
+                fetchPrayerTimes();
+            })
+            .catch(function() {
+                console.warn('⚠️ فشل جلب اسم المدينة، استخدام مكة كافتراضي');
+                fetchPrayerTimes();
+            });
+    }
+
+    // ===== طريقة احتياطية (IP API) =====
+    function getLocationByIP() {
+        console.log('🌐 محاولة تحديد الموقع عبر IP...');
+
+        // المحاولة 1: ipapi.co (مجانية)
         fetch('https://ipapi.co/json/')
             .then(function(response) {
                 if (!response.ok) throw new Error('فشل ipapi.co');
@@ -581,35 +641,7 @@
                     console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
                     fetchPrayerTimes();
                 } else {
-                    console.warn('⚠️ ipapi.co فشل، المحاولة التالية...');
-                    getLocationFallback();
-                }
-            })
-            .catch(function() {
-                console.warn('⚠️ ipapi.co خطأ، المحاولة التالية...');
-                getLocationFallback();
-            });
-    }
-
-    // ===== طريقة احتياطية (freegeoip.app) =====
-    function getLocationFallback() {
-        console.log('🌐 محاولة تحديد الموقع (طريقة احتياطية)...');
-
-        fetch('https://freegeoip.app/json/')
-            .then(function(response) {
-                if (!response.ok) throw new Error('فشل freegeoip');
-                return response.json();
-            })
-            .then(function(data) {
-                if (data && data.latitude && data.longitude && data.city) {
-                    userLat = data.latitude;
-                    userLng = data.longitude;
-                    userCity = data.city || data.region_name || 'مكة المكرمة';
-                    console.log('✅ المدينة (freegeoip): ' + userCity);
-                    console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
-                    fetchPrayerTimes();
-                } else {
-                    console.warn('⚠️ freegeoip فشل، استخدام مكة كافتراضي');
+                    console.warn('⚠️ ipapi.co فشل، استخدام مكة كافتراضي');
                     fetchPrayerTimes();
                 }
             })
@@ -828,8 +860,18 @@
     });
 
     console.log('🕌 بدء تشغيل مواقيت الصلاة (تلقائي)...');
-    getLocationByIP();
-    setInterval(fetchPrayerTimes, 60000);
+    
+    // ابدأ بتحديد الموقع
+    getLocation();
+    
+    // تحديث كل دقيقة
+    setInterval(function() {
+        if (locationFetched) {
+            fetchPrayerTimes();
+        } else {
+            getLocation();
+        }
+    }, 60000);
 
     console.log('✅ مواقيت الصلاة - شغالة تلقائي 🕌');
 })();
