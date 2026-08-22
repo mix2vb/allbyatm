@@ -611,32 +611,35 @@
     }
 
     // ===== طريقة احتياطية (IP API) =====
-    function getLocationByIP() {
-        console.log('🌐 محاولة تحديد الموقع عبر IP...');
+// ===== طريقة احتياطية موثوقة عبر (ipapi.co أو ipwho.is) =====
+function getLocationByIP() {
+    console.log('🌐 محاولة تحديد الموقع عبر IP...');
 
-        fetch('https://ipapi.co/json/')
-            .then(function(response) {
-                if (!response.ok) throw new Error('فشل ipapi.co');
-                return response.json();
-            })
-            .then(function(data) {
-                if (data && data.latitude && data.longitude && data.city) {
-                    userLat = data.latitude;
-                    userLng = data.longitude;
-                    userCity = data.city || data.region || 'مكة المكرمة';
-                    console.log('✅ المدينة (ipapi): ' + userCity);
-                    console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
-                    fetchPrayerTimes();
-                } else {
-                    console.warn('⚠️ ipapi.co فشل، استخدام مكة كافتراضي');
-                    fetchPrayerTimes();
-                }
-            })
-            .catch(function() {
-                console.warn('⚠️ جميع خدمات تحديد الموقع فشلت، استخدام مكة المكرمة كافتراضي');
+    // استخدام ipwho.is لأنها مجانية وتدعم HTTPS بالكامل
+    fetch('https://ipwho.is/')
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data && data.success) {
+                userLat = data.latitude;
+                userLng = data.longitude;
+                userCity = data.city || data.region || 'الرياض';
+                console.log('✅ المدينة (IP): ' + userCity);
+                console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
                 fetchPrayerTimes();
-            });
-    }
+            } else {
+                throw new Error('فشل جلب بيانات IP');
+            }
+        })
+        .catch(function(error) {
+            console.warn('⚠️ فشل تحديد الموقع عبر IP، استخدام الرياض كافتراضي');
+            userCity = 'الرياض';
+            userLat = 24.7136;
+            userLng = 46.6753;
+            fetchPrayerTimes();
+        });
+}
 
     // ===== جلب مواقيت الصلاة =====
     function fetchPrayerTimes() {
