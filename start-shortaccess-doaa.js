@@ -1,5 +1,4 @@
-    <!-- ===== JavaScript ===== -->
-    <script>
+
        (function() {
             'use strict';
  
@@ -112,4 +111,3 @@
  
                 showToast();
             })();
-    </script>
