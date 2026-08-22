@@ -511,7 +511,7 @@
             })();
  
 // ============================================================
-// 🕐 مواقيت الصلاة - نسخة تلقائية 100% (باستخدام Geolocation API)
+// 🕐 مواقيت الصلاة - نسخة تلقائية 100%
 // ============================================================
 (function() {
     var toast = document.getElementById('prayerToast');
@@ -536,7 +536,6 @@
     var userCity = 'مكة المكرمة';
     var userLat = 21.4225;
     var userLng = 39.8262;
-    var locationFetched = false;
 
     // ===== دوال localStorage =====
     function getClosedPrayers() {
@@ -563,45 +562,34 @@
         return closed[key] === true;
     }
 
-    // ===== 🔥 تحديد الموقع باستخدام Geolocation API (الأفضل والأدق) =====
+    // ===== 🔥 تحديد الموقع باستخدام Geolocation API =====
     function getLocation() {
         console.log('🌐 جاري تحديد الموقع عبر المتصفح...');
 
-        // التحقق من وجود Geolocation API
         if (!navigator.geolocation) {
             console.warn('⚠️ المتصفح لا يدعم تحديد الموقع، استخدام مكة كافتراضي');
             fetchPrayerTimes();
             return;
         }
 
-        // طلب الموقع من المتصفح
         navigator.geolocation.getCurrentPosition(
-            // نجاح
             function(position) {
                 userLat = position.coords.latitude;
                 userLng = position.coords.longitude;
-                locationFetched = true;
                 console.log('✅ الموقع تم تحديده بدقة عالية');
                 console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
-                
-                // جلب اسم المدينة من الإحداثيات (عكسياً)
                 getCityName(userLat, userLng);
             },
-            // فشل - استخدم طريقة احتياطية
             function(error) {
                 console.warn('⚠️ فشل تحديد الموقع عبر المتصفح:', error.message);
-                console.log('🔄 استخدام طريقة تحديد الموقع عبر IP كبديل...');
+                console.log('🔄 استخدام طريقة IP كبديل...');
                 getLocationByIP();
             },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 60000
-            }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
         );
     }
 
-    // ===== جلب اسم المدينة من الإحداثيات (Reverse Geocoding) =====
+    // ===== جلب اسم المدينة من الإحداثيات =====
     function getCityName(lat, lng) {
         var url = 'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lng + '&localityLanguage=ar';
 
@@ -626,7 +614,6 @@
     function getLocationByIP() {
         console.log('🌐 محاولة تحديد الموقع عبر IP...');
 
-        // المحاولة 1: ipapi.co (مجانية)
         fetch('https://ipapi.co/json/')
             .then(function(response) {
                 if (!response.ok) throw new Error('فشل ipapi.co');
@@ -860,19 +847,8 @@
     });
 
     console.log('🕌 بدء تشغيل مواقيت الصلاة (تلقائي)...');
-    
-    // ابدأ بتحديد الموقع
     getLocation();
-    
-    // تحديث كل دقيقة
-    setInterval(function() {
-        if (locationFetched) {
-            fetchPrayerTimes();
-        } else {
-            getLocation();
-        }
-    }, 60000);
-
+    setInterval(fetchPrayerTimes, 60000);
     console.log('✅ مواقيت الصلاة - شغالة تلقائي 🕌');
 })();
     </script>
