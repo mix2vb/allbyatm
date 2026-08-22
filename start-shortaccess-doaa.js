@@ -511,7 +511,7 @@
             })();
  
 // ============================================================
-// 🕐 مواقيت الصلاة - نسخة تلقائية 100%
+// 🕐 مواقيت الصلاة - نسخة تلقائية 100% (شاملة الحلول الاحتياطية)
 // ============================================================
 (function() {
     var toast = document.getElementById('prayerToast');
@@ -533,16 +533,44 @@
     var isToastVisible = false;
     var retryCount = 0;
     var MAX_RETRIES = 3;
-    var userCity = 'مكة المكرمة';
-    var userLat = 21.4225;
-    var userLng = 39.8262;
+    var userCity = 'الرياض';
+    var userLat = 24.7136;
+    var userLng = 46.6753;
+
+    // ===== قائمة خدمات IP الاحتياطية المتعددة =====
+    var ipServices = [
+        {
+            name: 'ipwho.is',
+            url: 'https://ipwho.is/',
+            parse: function(data) {
+                if (!data.success) return null;
+                return { lat: data.latitude, lng: data.longitude, city: data.city || data.region, timezone: data.timezone ? data.timezone.id : null };
+            }
+        },
+        {
+            name: 'ipapi.co',
+            url: 'https://ipapi.co/json/',
+            parse: function(data) {
+                if (data.error) return null;
+                return { lat: data.latitude, lng: data.longitude, city: data.city || data.region, timezone: data.timezone };
+            }
+        },
+        {
+            name: 'freeipapi',
+            url: 'https://freeipapi.com/api/json',
+            parse: function(data) {
+                if (!data.ipAddress) return null;
+                return { lat: data.latitude, lng: data.longitude, city: data.cityName || data.regionName, timezone: data.timeZone };
+            }
+        }
+    ];
 
     // ===== دوال localStorage =====
     function getClosedPrayers() {
         try {
             var data = localStorage.getItem('closedPrayers');
             return data ? JSON.parse(data) : {};
-        } catch {
+        } catch (e) {
             return {};
         }
     }
@@ -562,13 +590,13 @@
         return closed[key] === true;
     }
 
-    // ===== 🔥 تحديد الموقع باستخدام Geolocation API =====
+    // ===== 🔥 تحديد الموقع عبر GPS أولاً =====
     function getLocation() {
         console.log('🌐 جاري تحديد الموقع عبر المتصفح...');
 
         if (!navigator.geolocation) {
-            console.warn('⚠️ المتصفح لا يدعم تحديد الموقع، استخدام مكة كافتراضي');
-            fetchPrayerTimes();
+            console.warn('⚠️ المتصفح لا يدعم تحديد الموقع، البدء ببحث شبكة IP...');
+            tryNextIPService(0);
             return;
         }
 
@@ -576,70 +604,77 @@
             function(position) {
                 userLat = position.coords.latitude;
                 userLng = position.coords.longitude;
-                console.log('✅ الموقع تم تحديده بدقة عالية');
+                console.log('✅ الموقع تم تحديده بدقة عالية عبر GPS');
                 console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
                 getCityName(userLat, userLng);
             },
             function(error) {
-                console.warn('⚠️ فشل تحديد الموقع عبر المتصفح:', error.message);
-                console.log('🔄 استخدام طريقة IP كبديل...');
-                getLocationByIP();
+                console.warn('⚠️ فشل تحديد الموقع عبر GPS:', error.message);
+                console.log('🔄 البدء بالبحث عبر خدمات IP المتعددة...');
+                tryNextIPService(0);
             },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
         );
     }
 
-    // ===== جلب اسم المدينة من الإحداثيات =====
+    // ===== جلب اسم المدينة من الإحداثيات (في حال عمل GPS) =====
     function getCityName(lat, lng) {
         var url = 'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lng + '&localityLanguage=ar';
 
         fetch(url)
             .then(function(response) { return response.json(); })
             .then(function(data) {
-                if (data && data.city) {
-                    userCity = data.city || data.locality || data.principalSubdivision || 'مكة المكرمة';
+                if (data && (data.city || data.locality || data.principalSubdivision)) {
+                    userCity = data.city || data.locality || data.principalSubdivision || 'الرياض';
                     console.log('✅ المدينة: ' + userCity);
                 } else {
-                    console.warn('⚠️ فشل جلب اسم المدينة، استخدام مكة كافتراضي');
+                    console.warn('⚠️ فشل جلب اسم المدينة، استخدام الرياض كافتراضي');
                 }
                 fetchPrayerTimes();
             })
             .catch(function() {
-                console.warn('⚠️ فشل جلب اسم المدينة، استخدام مكة كافتراضي');
+                console.warn('⚠️ فشل جلب اسم المدينة، استخدام الرياض كافتراضي');
                 fetchPrayerTimes();
             });
     }
 
-    // ===== طريقة احتياطية (IP API) =====
-// ===== طريقة احتياطية موثوقة عبر (ipapi.co أو ipwho.is) =====
-function getLocationByIP() {
-    console.log('🌐 محاولة تحديد الموقع عبر IP...');
-
-    // استخدام ipwho.is لأنها مجانية وتدعم HTTPS بالكامل
-    fetch('https://ipwho.is/')
-        .then(function(response) {
-            return response.json();
-        })
-        .then(function(data) {
-            if (data && data.success) {
-                userLat = data.latitude;
-                userLng = data.longitude;
-                userCity = data.city || data.region || 'الرياض';
-                console.log('✅ المدينة (IP): ' + userCity);
-                console.log('📍 الإحداثيات: ' + userLat + ', ' + userLng);
-                fetchPrayerTimes();
-            } else {
-                throw new Error('فشل جلب بيانات IP');
-            }
-        })
-        .catch(function(error) {
-            console.warn('⚠️ فشل تحديد الموقع عبر IP، استخدام الرياض كافتراضي');
+    // ===== البحث التنقلي عبر أكثر من سيرفر IP محلي/عالمي =====
+    function tryNextIPService(index) {
+        if (index >= ipServices.length) {
+            console.warn('⚠️ جميع خدمات IP فشلت، استخدام الرياض كافتراضي حتمي');
             userCity = 'الرياض';
             userLat = 24.7136;
             userLng = 46.6753;
             fetchPrayerTimes();
-        });
-}
+            return;
+        }
+
+        var service = ipServices[index];
+        console.log('🌐 محاولة جلب الموقع عبر [' + service.name + ']...');
+
+        fetch(service.url)
+            .then(function(res) {
+                if (!res.ok) throw new Error('سيرفر غير مستجيب');
+                return res.json();
+            })
+            .then(function(data) {
+                var parsed = service.parse(data);
+                if (parsed && parsed.lat && parsed.lng) {
+                    userLat = parsed.lat;
+                    userLng = parsed.lng;
+                    userCity = parsed.city || 'الرياض';
+                    console.log('✅ تم التحديد بنجاح عبر: ' + service.name);
+                    console.log('📍 المدينة: ' + userCity + ' | الإحداثيات: ' + userLat + ', ' + userLng);
+                    fetchPrayerTimes();
+                } else {
+                    throw new Error('بيانات غير مكتملة');
+                }
+            })
+            .catch(function(err) {
+                console.warn('⚠️ فشل ' + service.name + ' (' + err.message + ')، تجربة الخدمة التالية...');
+                tryNextIPService(index + 1);
+            });
+    }
 
     // ===== جلب مواقيت الصلاة =====
     function fetchPrayerTimes() {
