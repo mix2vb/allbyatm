@@ -511,144 +511,60 @@
             })();
  
 // ============================================================
-// 🕐 مواقيت الصلاة - نسخة تلقائية 100%
+// 🕐 مواقيت الصلاة - النسخة الموحدة الخالية من الأخطاء
 // ============================================================
 (function() {
     var toast = document.getElementById('prayerToast');
-    if (!toast) {
-        console.warn('⚠️ مواقيت الصلاة: غير موجود');
-        return;
-    }
+    if (!toast) return;
 
     var textEl = document.getElementById('prayerText');
     var iconEl = document.getElementById('prayerIcon');
     var closeBtn = document.getElementById('closePrayerToast');
 
-    if (!textEl || !iconEl) {
-        console.warn('⚠️ مواقيت الصلاة: عناصر ناقصة');
-        return;
-    }
+    if (!textEl || !iconEl) return;
 
     var currentPrayer = null;
     var isToastVisible = false;
-    var retryCount = 0;
-    var MAX_RETRIES = 3;
-    var userCity = 'مكة المكرمة';
-    var userLat = 21.4225;
-    var userLng = 39.8262;
+    var userCity = 'الرياض';
+    var userLat = 24.7136;
+    var userLng = 46.6753;
 
-    function getClosedPrayers() {
-        try {
-            var data = localStorage.getItem('closedPrayers');
-            return data ? JSON.parse(data) : {};
-        } catch {
-            return {};
-        }
-    }
-
-    function setClosedPrayer(prayerName) {
-        var closed = getClosedPrayers();
-        var today = new Date().toDateString();
-        var key = today + '_' + prayerName;
-        closed[key] = true;
-        localStorage.setItem('closedPrayers', JSON.stringify(closed));
-    }
-
-    function isPrayerClosed(prayerName) {
-        var closed = getClosedPrayers();
-        var today = new Date().toDateString();
-        var key = today + '_' + prayerName;
-        return closed[key] === true;
-    }
-
-    // ===== تحديد الموقع تلقائياً =====
     function getLocation() {
-        console.log('🌐 جاري تحديد الموقع...');
-
-        // المحاولة 1: Geolocation API (الأفضل)
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    userLat = position.coords.latitude;
-                    userLng = position.coords.longitude;
-                    console.log('✅ الموقع via GPS: ' + userLat + ', ' + userLng);
-                    getCityName(userLat, userLng);
-                },
-                function() {
-                    console.log('⚠️ فشل GPS، استخدام IP...');
-                    getLocationByIP();
-                },
-                { enableHighAccuracy: true, timeout: 10000 }
-            );
-        } else {
-            getLocationByIP();
-        }
-    }
-
-    function getCityName(lat, lng) {
-        fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lng + '&localityLanguage=ar')
-            .then(function(r) { return r.json(); })
+        // استخدام خدمة ipwho.is الآمنة بدلاً من ip-api المحجوبة
+        fetch('https://ipwho.is/')
+            .then(function(res) { return res.json(); })
             .then(function(data) {
-                userCity = data.city || data.locality || 'مكة المكرمة';
-                console.log('✅ المدينة: ' + userCity);
-                fetchPrayerTimes();
-            })
-            .catch(function() {
-                console.warn('⚠️ فشل جلب المدينة، استخدام مكة');
-                fetchPrayerTimes();
-            });
-    }
-
-    function getLocationByIP() {
-        console.log('🌐 تحديد الموقع عبر IP...');
-        fetch('https://ipapi.co/json/')
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data && data.latitude) {
+                if (data && data.success) {
                     userLat = data.latitude;
                     userLng = data.longitude;
-                    userCity = data.city || data.region || 'مكة المكرمة';
-                    console.log('✅ المدينة (IP): ' + userCity);
-                    fetchPrayerTimes();
-                } else {
-                    console.warn('⚠️ فشل IP، استخدام مكة');
-                    fetchPrayerTimes();
+                    userCity = data.city || data.region || 'الرياض';
+                    console.log('✅ تم تحديد الموقع: ' + userCity);
                 }
+                fetchPrayerTimes();
             })
             .catch(function() {
-                console.warn('⚠️ فشل IP، استخدام مكة');
+                console.warn('⚠️ استخدام موقع الرياض الافتراضي');
                 fetchPrayerTimes();
             });
     }
 
     function fetchPrayerTimes() {
         var url = 'https://api.aladhan.com/v1/timings?latitude=' + userLat + '&longitude=' + userLng + '&method=4';
-        console.log('📡 جلب مواقيت الصلاة لـ ' + userCity + '...');
 
         fetch(url)
-            .then(function(r) { return r.json(); })
+            .then(function(res) { return res.json(); })
             .then(function(data) {
-                if (data && data.code === 200) {
-                    retryCount = 0;
-                    processPrayerTimes(data.data.timings);
-                } else {
-                    handleError();
+                if (data && data.code === 200 && data.data) {
+                    var timezone = data.data.meta ? data.data.meta.timezone : null;
+                    processPrayerTimes(data.data.timings, timezone);
                 }
             })
-            .catch(function() { handleError(); });
+            .catch(function(err) {
+                console.error('❌ خطأ في جلب المواقيت:', err);
+            });
     }
 
-    function handleError() {
-        retryCount++;
-        if (retryCount <= 3) {
-            setTimeout(fetchPrayerTimes, 5000 * retryCount);
-        } else {
-            setTimeout(fetchPrayerTimes, 300000);
-            retryCount = 0;
-        }
-    }
-
-    function processPrayerTimes(timings) {
+    function processPrayerTimes(timings, timezone) {
         var prayerMap = {
             'Fajr': { ar: 'الفجر', color: '#6c5b7b' },
             'Dhuhr': { ar: 'الظهر', color: '#f39c12' },
@@ -659,25 +575,26 @@
 
         var prayerMinutes = {};
         var prayerNames = [];
+
         var now = new Date();
         var currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-        console.log('🕐 الوقت: ' + now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0'));
-        console.log('📍 ' + userCity);
-
-        for (var en in prayerMap) {
-            var info = prayerMap[en];
-            var timeStr = timings[en];
-            if (timeStr && timeStr.indexOf(':') !== -1) {
-                var parts = timeStr.split(':');
-                var minutes = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-                prayerMinutes[info.ar] = minutes;
-                prayerNames.push(info.ar);
-                console.log('✅ ' + info.ar + ': ' + timeStr);
-            }
+        if (timezone) {
+            try {
+                var localTimeString = now.toLocaleString("en-US", { timeZone: timezone });
+                var localDate = new Date(localTimeString);
+                currentMinutes = localDate.getHours() * 60 + localDate.getMinutes();
+            } catch (e) {}
         }
 
-        if (prayerNames.length === 0) { handleError(); return; }
+        for (var en in prayerMap) {
+            if (prayerMap.hasOwnProperty(en) && timings[en]) {
+                var parts = timings[en].split(':');
+                var minutes = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+                prayerMinutes[prayerMap[en].ar] = minutes;
+                prayerNames.push(prayerMap[en].ar);
+            }
+        }
 
         var targetPrayer = null;
         var targetTime = null;
@@ -685,10 +602,10 @@
 
         for (var i = 0; i < prayerNames.length; i++) {
             var name = prayerNames[i];
-            var prayerMin = prayerMinutes[name];
-            if (prayerMin <= currentMinutes && currentMinutes - prayerMin <= 20) {
+            var pMin = prayerMinutes[name];
+            if (pMin <= currentMinutes && currentMinutes - pMin <= 20) {
                 targetPrayer = name;
-                targetTime = prayerMin;
+                targetTime = pMin;
                 isAfter = true;
                 break;
             }
@@ -707,23 +624,16 @@
             if (!targetPrayer) {
                 targetPrayer = 'الفجر';
                 targetTime = prayerMinutes['الفجر'] + 1440;
-                isAfter = false;
             }
         }
 
-        var diffMinutes = isAfter ? currentMinutes - targetTime : targetTime - currentMinutes;
-
-        if (isPrayerClosed(targetPrayer)) {
-            console.log('⏭️ ' + targetPrayer + ' مغلقة');
-            return;
-        }
+        var diffMinutes = isAfter ? (currentMinutes - targetTime) : (targetTime - currentMinutes);
 
         if ((!isAfter && diffMinutes <= 20 && diffMinutes > 0) || (isAfter && diffMinutes <= 20)) {
             var hoursLeft = Math.floor(diffMinutes / 60);
             var minutesLeft = Math.round(diffMinutes % 60);
-            var timeString = isAfter ? 
-                'منذ ' + (hoursLeft > 0 ? hoursLeft + ' ساعة و ' : '') + minutesLeft + ' دقيقة' :
-                (hoursLeft > 0 ? 'بعد ' + hoursLeft + ' ساعة و ' : 'بعد ') + minutesLeft + ' دقيقة';
+            var timeString = isAfter ? 'منذ ' + (hoursLeft > 0 ? hoursLeft + ' ساعة و ' : '') + minutesLeft + ' دقيقة'
+                                     : (hoursLeft > 0 ? 'بعد ' + hoursLeft + ' ساعة و ' : 'بعد ') + minutesLeft + ' دقيقة';
 
             var color = '#2d7d46';
             for (var en2 in prayerMap) {
@@ -734,41 +644,21 @@
             iconEl.textContent = '🕌';
             iconEl.style.color = color;
             toast.style.borderTopColor = color;
-            currentPrayer = targetPrayer;
 
-            if (!isToastVisible) { showToast(); }
-            clearTimeout(window.autoHideTimer);
-            window.autoHideTimer = setTimeout(closeToast, 30000);
+            if (!isToastVisible) {
+                toast.classList.remove('hidden');
+                setTimeout(function() { toast.classList.add('show'); isToastVisible = true; }, 200);
+            }
+        } else if (!isAfter && diffMinutes > 20) {
+            if (isToastVisible) {
+                toast.classList.remove('show');
+                toast.classList.add('hidden');
+                isToastVisible = false;
+            }
         }
     }
 
-    function closeToast() {
-        toast.classList.remove('show');
-        toast.classList.add('hidden');
-        isToastVisible = false;
-        if (currentPrayer) {
-            setClosedPrayer(currentPrayer);
-            console.log('✅ تم إغلاق ' + currentPrayer);
-        }
-    }
-
-    function showToast() {
-        toast.classList.remove('hidden');
-        setTimeout(function() { toast.classList.add('show'); isToastVisible = true; }, 200);
-    }
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', function(e) { e.stopPropagation(); closeToast(); });
-    }
-
-    toast.addEventListener('click', function(e) {
-        if (e.target.closest('#closePrayerToast')) return;
-        closeToast();
-    });
-
-    console.log('🕌 بدء تشغيل مواقيت الصلاة (تلقائي)...');
     getLocation();
     setInterval(fetchPrayerTimes, 60000);
-    console.log('✅ مواقيت الصلاة - شغالة تلقائي 🕌');
 })();
     </script>
